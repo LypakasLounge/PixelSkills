@@ -2,9 +2,9 @@ package com.lypaka.pixelskills.API;
 
 import com.lypaka.pixelskills.SkillRegistry.Skill;
 import com.lypaka.pixelskills.SkillRegistry.SkillReward;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraftforge.fml.common.eventhandler.Cancelable;
-import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraftforge.eventbus.api.Cancelable;
+import net.minecraftforge.eventbus.api.Event;
 
 import java.util.List;
 
@@ -15,12 +15,12 @@ import java.util.List;
 @Cancelable
 public class SkillRewardEvent extends Event {
 
-    private final EntityPlayerMP player;
+    private final ServerPlayerEntity player;
     private final Skill skill;
     private final SkillReward reward;
     private List<String> commands;
 
-    public SkillRewardEvent (EntityPlayerMP player, Skill skill, SkillReward reward) {
+    public SkillRewardEvent (ServerPlayerEntity player, Skill skill, SkillReward reward) {
 
         this.player = player;
         this.skill = skill;
@@ -29,7 +29,7 @@ public class SkillRewardEvent extends Event {
 
     }
 
-    public EntityPlayerMP getPlayer() {
+    public ServerPlayerEntity getPlayer() {
 
         return this.player;
 

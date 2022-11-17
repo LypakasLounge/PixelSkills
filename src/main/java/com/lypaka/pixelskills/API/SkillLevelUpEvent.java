@@ -1,20 +1,20 @@
 package com.lypaka.pixelskills.API;
 
 import com.lypaka.pixelskills.SkillRegistry.Skill;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraftforge.eventbus.api.Event;
 
 /**
  * Called when a player is set to level up a skill to its next level
  */
 public class SkillLevelUpEvent extends Event {
 
-    private final EntityPlayerMP player;
+    private final ServerPlayerEntity player;
     private final Skill skill;
     private final int startingLevel;
     private final int endingLevel;
 
-    public SkillLevelUpEvent (EntityPlayerMP player, Skill skill, int startingLevel, int endingLevel) {
+    public SkillLevelUpEvent (ServerPlayerEntity player, Skill skill, int startingLevel, int endingLevel) {
 
         this.player = player;
         this.skill = skill;
@@ -23,7 +23,7 @@ public class SkillLevelUpEvent extends Event {
 
     }
 
-    public EntityPlayerMP getPlayer() {
+    public ServerPlayerEntity getPlayer() {
 
         return this.player;
 

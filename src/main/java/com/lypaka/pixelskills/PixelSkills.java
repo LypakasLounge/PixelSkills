@@ -3,19 +3,10 @@ package com.lypaka.pixelskills;
 import com.lypaka.lypakautils.ConfigurationLoaders.BasicConfigManager;
 import com.lypaka.lypakautils.ConfigurationLoaders.ConfigUtils;
 import com.lypaka.lypakautils.ConfigurationLoaders.PlayerConfigManager;
-import com.lypaka.lypakautils.PixelmonHandlers.PixelmonVersionDetector;
-import com.lypaka.pixelskills.Commands.PixelSkillsCommand;
 import com.lypaka.pixelskills.Config.ConfigGetters;
 import com.lypaka.pixelskills.Config.SkillGetters;
-import com.lypaka.pixelskills.Listeners.EventRegistry;
-import com.lypaka.pixelskills.Listeners.JoinListener;
 import com.lypaka.pixelskills.SkillRegistry.Skill;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartedEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,19 +19,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Mod(
-        modid = PixelSkills.MOD_ID,
-        name = PixelSkills.MOD_NAME,
-        version = PixelSkills.VERSION,
-        acceptableRemoteVersions = "*",
-        dependencies = "required-after:lypakautils@[0.0.5,);required-after:pixelmon;required-after:gooeylibs2"
-)
+// The value here should match an entry in the META-INF/mods.toml file
+@Mod("pixelskills")
 public class PixelSkills {
 
     public static final String MOD_ID = "pixelskills";
     public static final String MOD_NAME = "PixelSkills";
     public static final String VERSION = "5.1.0";
-    public static Logger logger = LogManager.getLogger(MOD_NAME);
+    public static final Logger logger = LogManager.getLogger();
     public static BasicConfigManager configManager;
     public static PlayerConfigManager playerConfigManager;
     public static Map<String, Skill> skillConfigManager = new HashMap<>();
@@ -49,8 +35,7 @@ public class PixelSkills {
     public static List<String> galarians = new ArrayList<>();
     public static List<String> hisuians = new ArrayList<>();
 
-    @Mod.EventHandler
-    public void preInit (FMLPreInitializationEvent event) throws IOException, ObjectMappingException {
+    public PixelSkills() throws IOException, ObjectMappingException {
 
         dir = ConfigUtils.checkDir(Paths.get("./config/pixelskills"));
         String[] files = new String[]{"skills.conf", "messages.conf", "gui.conf"};
@@ -72,40 +57,7 @@ public class PixelSkills {
         }
 
         SkillGetters.load();
-
-    }
-
-    @Mod.EventHandler
-    public void onServerStarting (FMLServerStartingEvent event) {
-
-        event.registerServerCommand(new PixelSkillsCommand());
-
-    }
-
-    @Mod.EventHandler
-    public void onPostInit (FMLServerStartedEvent event) {
-
-        if (PixelmonVersionDetector.VERSION.equalsIgnoreCase("Generations")) {
-
-            EventRegistry.registerGenerationsEvents();
-
-        } else if (PixelmonVersionDetector.VERSION.equalsIgnoreCase("Reforged")) {
-
-            EventRegistry.registerReforgedEvents();
-
-        }
-        MinecraftForge.EVENT_BUS.register(new JoinListener());
         loadRegionalLists();
-
-    }
-
-    @Mod.EventHandler
-    public void onShuttingDown (FMLServerStoppingEvent event) {
-
-        PixelSkills.configManager.getConfigNode(1, "Storage", "Boss-Bar").setValue(ConfigGetters.bossBarList);
-        PixelSkills.configManager.getConfigNode(1, "Storage", "Chat").setValue(ConfigGetters.chatList);
-        PixelSkills.configManager.getConfigNode(1, "Storage", "None").setValue(ConfigGetters.noneList);
-        PixelSkills.configManager.save();
 
     }
 

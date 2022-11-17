@@ -7,17 +7,20 @@ import ca.landonjw.gooeylibs2.api.page.GooeyPage;
 import ca.landonjw.gooeylibs2.api.template.types.ChestTemplate;
 import com.google.common.reflect.TypeToken;
 import com.lypaka.lypakautils.FancyText;
+import com.lypaka.lypakautils.ItemStackBuilder;
 import com.lypaka.pixelskills.Config.ConfigGetters;
 import com.lypaka.pixelskills.Config.SkillGetters;
 import com.lypaka.pixelskills.Listeners.JoinListener;
 import com.lypaka.pixelskills.PixelSkills;
 import com.lypaka.pixelskills.PlayerAccounts.Account;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.Item;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.StringNBT;
+import net.minecraft.util.text.ITextComponent;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import org.checkerframework.checker.units.qual.C;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +28,7 @@ import java.util.Map;
 
 public class MainMenu {
 
-    public static void open (EntityPlayerMP player) throws ObjectMappingException {
+    public static void open (ServerPlayerEntity player) throws ObjectMappingException {
 
         Account account = JoinListener.accountMap.get(player.getUniqueID());
         ChestTemplate template = ChestTemplate.builder(ConfigGetters.guiRows).build();
@@ -45,12 +48,6 @@ public class MainMenu {
             String skill = entry.getKey();
             Map<String, String> data = entry.getValue();
             String id = data.get("ID");
-            int meta = 0;
-            if (data.containsKey("Metadata")) {
-
-                meta = Integer.parseInt(data.get("Metadata"));
-
-            }
             String displayName = data.get("Display-Name");
             List<String> loreStrings = new ArrayList<>();
             if (!PixelSkills.configManager.getConfigNode(2, "Slots", skill, "Lore").isVirtual()) {
@@ -60,7 +57,7 @@ public class MainMenu {
             }
 
             int slot = Integer.parseInt(data.get("Slot"));
-            page.getTemplate().getSlot(slot).setButton(getSkillButton(skill, id, meta, displayName, loreStrings, account));
+            page.getTemplate().getSlot(slot).setButton(getSkillButton(skill, id, displayName, loreStrings, account));
 
         }
 
@@ -68,14 +65,9 @@ public class MainMenu {
 
     }
 
-    private static Button getSkillButton (String skill, String id, int meta, String displayName, List<String> loreString, Account account) {
+    private static Button getSkillButton (String skill, String id, String displayName, List<String> loreString, Account account) {
 
-        ItemStack item = new ItemStack(Item.getByNameOrId(id));
-        if (meta > 0) {
-
-            item.setItemDamage(meta);
-
-        }
+        ItemStack item = ItemStackBuilder.buildFromStringID(id);
         if (!loreString.isEmpty()) {
 
             int level = account.getLevel(skill);
@@ -89,35 +81,30 @@ public class MainMenu {
 
             }
 
-            NBTTagList lore = new NBTTagList();
+            item.setDisplayName(FancyText.getFormattedText(displayName));
+            ListNBT lore = new ListNBT();
             for (String s : loreString) {
 
-                lore.appendTag(new NBTTagString(FancyText.getFormattedString(s
+                lore.add(StringNBT.valueOf(ITextComponent.Serializer.toJson(FancyText.getFormattedText(s
                         .replace("%level%", String.valueOf(level))
                         .replace("%current%", String.valueOf(exp))
                         .replace("%needed%", String.valueOf(needed))
-                )));
+                ))));
 
             }
 
-            item.getOrCreateSubCompound("display").setTag("Lore", lore);
+            item.getOrCreateChildTag("display").put("Lore", lore);
 
         }
 
-        item.setStackDisplayName(FancyText.getFormattedString(displayName));
         return GooeyButton.builder().display(item).build();
 
     }
 
     private static Button getBorderButton() {
 
-        ItemStack item = new ItemStack(Item.getByNameOrId(ConfigGetters.borderID));
-        if (ConfigGetters.borderMeta > 0) {
-
-            item.setItemDamage(ConfigGetters.borderMeta);
-
-        }
-        item.setStackDisplayName(FancyText.getFormattedString(""));
+        ItemStack item = ItemStackBuilder.buildFromStringID(ConfigGetters.borderID);
+        item.setDisplayName(FancyText.getFormattedText(""));
         return GooeyButton.builder().display(item).build();
 
     }

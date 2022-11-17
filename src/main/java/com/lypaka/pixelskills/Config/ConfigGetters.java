@@ -18,14 +18,12 @@ public class ConfigGetters {
     public static String chatEXP;
     public static String chatLevelUp;
     public static String defaultMessageSystem;
-    public static ArrayList<String> bossBarList = new ArrayList<>();
     public static ArrayList<String> chatList = new ArrayList<>();
     public static ArrayList<String> noneList = new ArrayList<>();
 
     public static int guiRows;
     public static String displayTitle;
     public static String borderID;
-    public static int borderMeta;
     public static List<Integer> borderSlots;
     public static Map<String, Map<String, String>> skillSlots;
 
@@ -50,14 +48,12 @@ public class ConfigGetters {
         chatEXP = PixelSkills.configManager.getConfigNode(1, "Messages", "Chat-EXP").getString();
         chatLevelUp = PixelSkills.configManager.getConfigNode(1, "Messages", "Chat-Level-Up").getString();
         defaultMessageSystem = PixelSkills.configManager.getConfigNode(1, "Messages", "Default-Message-System").getString();
-        bossBarList = new ArrayList<>(PixelSkills.configManager.getConfigNode(1, "Storage", "Boss-Bar").getList(TypeToken.of(String.class)));
         chatList = new ArrayList<>(PixelSkills.configManager.getConfigNode(1, "Storage", "Chat").getList(TypeToken.of(String.class)));
         noneList = new ArrayList<>(PixelSkills.configManager.getConfigNode(1, "Storage", "None").getList(TypeToken.of(String.class)));
 
         guiRows = PixelSkills.configManager.getConfigNode(2, "Amount").getInt();
         displayTitle = PixelSkills.configManager.getConfigNode(2, "Display-Title").getString();
         borderID = PixelSkills.configManager.getConfigNode(2, "GUI-Border", "ID").getString();
-        borderMeta = PixelSkills.configManager.getConfigNode(2, "GUI-Border", "Metadata").getInt();
         borderSlots = PixelSkills.configManager.getConfigNode(2, "GUI-Border", "Slots").getList(TypeToken.of(Integer.class));
         skillSlots = PixelSkills.configManager.getConfigNode(2, "Slots").getValue(new TypeToken<Map<String, Map<String, String>>>() {});
 

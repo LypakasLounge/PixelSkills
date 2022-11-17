@@ -1,155 +1,117 @@
 package com.lypaka.pixelskills.Commands;
 
 import com.lypaka.lypakautils.FancyText;
-import com.lypaka.lypakautils.JoinListener;
 import com.lypaka.lypakautils.PermissionHandler;
 import com.lypaka.pixelskills.Config.SkillGetters;
+import com.lypaka.pixelskills.Listeners.JoinListener;
 import com.lypaka.pixelskills.PixelSkills;
 import com.lypaka.pixelskills.PlayerAccounts.Account;
 import com.lypaka.pixelskills.SkillRegistry.Skill;
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.server.MinecraftServer;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.Commands;
+import net.minecraft.command.arguments.EntityArgument;
+import net.minecraft.entity.player.ServerPlayerEntity;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
-public class SetLevelCommand extends CommandBase {
+public class SetLevelCommand {
 
-    @Override
-    public String getName() {
+    public SetLevelCommand (CommandDispatcher<CommandSource> dispatcher) {
 
-        return "setlevel";
+        for (String a : PixelSkillsCommand.ALIASES) {
 
-    }
+            dispatcher.register(
+                    Commands.literal(a)
+                            .then(Commands.literal("setlevel")
+                                    .then(Commands.argument("player", EntityArgument.players())
+                                            .then(Commands.argument("skill", StringArgumentType.string())
+                                                    .then(Commands.argument("level", IntegerArgumentType.integer(1))
+                                                            .executes(c -> {
 
-    @Override
-    public List<String> getAliases() {
+                                                                if (c.getSource().getEntity() instanceof ServerPlayerEntity) {
 
-        List<String> a = new ArrayList<>();
-        a.add("setlvl");
-        return a;
+                                                                    ServerPlayerEntity player = (ServerPlayerEntity) c.getSource().getEntity();
+                                                                    if (!PermissionHandler.hasPermission(player, "pixelskills.command.admin")) {
 
-    }
+                                                                        player.sendMessage(FancyText.getFormattedText("&cYou don't have permission to use this command!"), player.getUniqueID());
+                                                                        return 0;
 
-    @Override
-    public String getUsage (ICommandSender sender) {
+                                                                    }
 
-        return "/pskills setlevel <player> <skill> <level>";
+                                                                }
 
-    }
+                                                                ServerPlayerEntity target = EntityArgument.getPlayer(c, "player");
+                                                                String skillName = StringArgumentType.getString(c, "skill");
+                                                                int level = IntegerArgumentType.getInteger(c, "level");
+                                                                Skill skill = null;
+                                                                for (Map.Entry<String, Skill> entry : PixelSkills.skillConfigManager.entrySet()) {
 
-    @Override
-    public void execute (MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+                                                                    if (skillName.equalsIgnoreCase(entry.getKey())) {
 
-        if (sender instanceof EntityPlayerMP) {
+                                                                        skill = entry.getValue();
+                                                                        break;
 
-            EntityPlayerMP player = (EntityPlayerMP) sender;
-            if (!PermissionHandler.hasPermission(player, "pixelskills.command.admin")) {
+                                                                    }
 
-                player.sendMessage(FancyText.getFormattedText("&cYou don't have permission to use this command!"));
-                return;
+                                                                }
 
-            }
+                                                                if (skill == null) {
 
-        }
+                                                                    c.getSource().sendErrorMessage(FancyText.getFormattedText("&cInvalid skill name!"));
+                                                                    return 0;
 
-        if (args.length < 4) {
+                                                                }
 
-            sender.sendMessage(FancyText.getFormattedText(getUsage(sender)));
-            return;
+                                                                Account account = JoinListener.accountMap.get(target.getUniqueID());
+                                                                int maxLevel = SkillGetters.skillLevelUpMaps.get(skill.getSkillName()).size();
+                                                                if (level > maxLevel) {
 
-        }
+                                                                    c.getSource().sendErrorMessage(FancyText.getFormattedText("&cCannot set level higher than max level!"));
+                                                                    return 0;
 
-        String playerArg = args[1];
-        String skillArg = args[2];
-        int level = Integer.parseInt(args[3]);
-        EntityPlayerMP target = null;
-        Skill skill = null;
+                                                                }
+                                                                if (level <= 0) {
 
-        for (Map.Entry<UUID, EntityPlayerMP> entry : JoinListener.playerMap.entrySet()) {
+                                                                    c.getSource().sendErrorMessage(FancyText.getFormattedText("&cMinimum level support is level 1!"));
+                                                                    return 0;
 
-            if (entry.getValue().getName().equalsIgnoreCase(playerArg)) {
+                                                                }
 
-                target = entry.getValue();
-                break;
+                                                                int currentLevel = account.getLevel(skill);
+                                                                if (level == currentLevel) {
 
-            }
+                                                                    c.getSource().sendErrorMessage(FancyText.getFormattedText("&cCannot set level to player's current level!"));
+                                                                    return 0;
 
-        }
+                                                                }
 
-        if (target == null) {
+                                                                double neededEXP;
+                                                                if (level == 1) {
 
-            sender.sendMessage(FancyText.getFormattedText("&cInvalid player name!"));
-            return;
+                                                                    neededEXP = 0.0;
 
-        }
+                                                                } else {
 
-        for (Map.Entry<String, Skill> entry : PixelSkills.skillConfigManager.entrySet()) {
+                                                                    neededEXP = SkillGetters.skillLevelUpMaps.get(skill.getSkillName()).get("Level-" + level);
 
-            if (skillArg.equalsIgnoreCase(entry.getKey())) {
+                                                                }
+                                                                account.setLevel(skill, level);
+                                                                account.setEXP(skill, neededEXP);
+                                                                c.getSource().sendFeedback(FancyText.getFormattedText("&aSuccessfully set " + target.getName() + "'s level in " + skill.getSkillName() + " to " + level + "!"), true);
+                                                                target.sendMessage(FancyText.getFormattedText("&eYour level in " + skill.getSkillName() + " was set to " + level + "."), target.getUniqueID());
+                                                                return 1;
 
-                skill = entry.getValue();
-                break;
-
-            }
-
-        }
-
-        if (skill == null) {
-
-            sender.sendMessage(FancyText.getFormattedText("&cInvalid skill name!"));
-            return;
-
-        }
-
-        if (!com.lypaka.pixelskills.Listeners.JoinListener.accountMap.containsKey(target.getUniqueID())) {
-
-            sender.sendMessage(FancyText.getFormattedText("&c" + target.getName() + " does not have an account, and this is not a good thing!"));
-            return;
-
-        }
-        Account account = com.lypaka.pixelskills.Listeners.JoinListener.accountMap.get(target.getUniqueID());
-        int maxLevel = SkillGetters.skillLevelUpMaps.get(skill.getSkillName()).size();
-        if (level > maxLevel) {
-
-            sender.sendMessage(FancyText.getFormattedText("&cCannot set level higher than max level!"));
-            return;
+                                                            })
+                                                    )
+                                            )
+                                    )
+                            )
+            );
 
         }
-        if (level <= 0) {
-
-            sender.sendMessage(FancyText.getFormattedText("&cMinimum level support is level 1!"));
-            return;
-
-        }
-
-        int currentLevel = account.getLevel(skill);
-        if (level == currentLevel) {
-
-            sender.sendMessage(FancyText.getFormattedText("&cCannot set level to player's current level!"));
-            return;
-
-        }
-
-        double neededEXP;
-        if (level == 1) {
-
-            neededEXP = 0.0;
-
-        } else {
-
-            neededEXP = SkillGetters.skillLevelUpMaps.get(skill.getSkillName()).get("Level-" + level);
-
-        }
-        account.setLevel(skill, level);
-        account.setEXP(skill, neededEXP);
-        sender.sendMessage(FancyText.getFormattedText("&aSuccessfully set " + target.getName() + "'s level in " + skill.getSkillName() + " to " + level + "!"));
-        target.sendMessage(FancyText.getFormattedText("&eYour level in " + skill.getSkillName() + " was set to " + level + "."));
 
     }
 

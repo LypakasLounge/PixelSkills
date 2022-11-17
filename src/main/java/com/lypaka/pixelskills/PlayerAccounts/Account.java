@@ -1,7 +1,6 @@
 package com.lypaka.pixelskills.PlayerAccounts;
 
 import com.lypaka.lypakautils.PermissionHandler;
-import com.lypaka.lypakautils.PixelmonHandlers.RandomHandler;
 import com.lypaka.pixelskills.API.SkillLevelUpEvent;
 import com.lypaka.pixelskills.API.SkillRewardEvent;
 import com.lypaka.pixelskills.Config.ConfigGetters;
@@ -10,9 +9,9 @@ import com.lypaka.pixelskills.Listeners.JoinListener;
 import com.lypaka.pixelskills.PixelSkills;
 import com.lypaka.pixelskills.SkillRegistry.Skill;
 import com.lypaka.pixelskills.SkillRegistry.SkillReward;
-import net.minecraft.entity.player.EntityPlayerMP;
+import com.pixelmonmod.pixelmon.api.util.helpers.RandomHelper;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -22,10 +21,10 @@ import java.util.Map;
 
 public class Account {
 
-    private final EntityPlayerMP player;
+    private final ServerPlayerEntity player;
     private final Map<String, Map<String, String>> infoMap;
 
-    public Account (EntityPlayerMP player) {
+    public Account (ServerPlayerEntity player) {
 
         this.player = player;
         this.infoMap = new HashMap<>();
@@ -204,19 +203,11 @@ public class Account {
 
                         MessageSystem.sendChatEXP(this.player, skill, gained);
 
-                    } else if (ConfigGetters.bossBarList.contains(this.player.getUniqueID().toString())) {
-
-                        MessageSystem.sendBossBarEXP(this.player, skill);
-
                     } else if (!ConfigGetters.noneList.contains(this.player.getUniqueID().toString())) {
 
                         if (ConfigGetters.defaultMessageSystem.equalsIgnoreCase("chat")) {
 
                             MessageSystem.sendChatEXP(this.player, skill, gained);
-
-                        } else {
-
-                            MessageSystem.sendBossBarEXP(this.player, skill);
 
                         }
 
@@ -237,19 +228,11 @@ public class Account {
 
                         MessageSystem.sendChatLevelUp(this.player, skill, finalizedLevel);
 
-                    } else if (ConfigGetters.bossBarList.contains(this.player.getUniqueID().toString())) {
-
-                        MessageSystem.sendBossBarLevelUp(this.player, skill);
-
                     } else if (!ConfigGetters.noneList.contains(this.player.getUniqueID().toString())) {
 
                         if (ConfigGetters.defaultMessageSystem.equalsIgnoreCase("chat")) {
 
                             MessageSystem.sendChatLevelUp(this.player, skill, finalizedLevel);
-
-                        } else {
-
-                            MessageSystem.sendBossBarLevelUp(this.player, skill);
 
                         }
 
@@ -324,7 +307,7 @@ public class Account {
             }
             if (!passesRequirements) continue;
             double chance = sr.getEXPChance();
-            if (RandomHandler.getRandomChance(chance)) {
+            if (RandomHelper.getRandomChance(chance)) {
 
                 reward = sr;
                 if (multiple) {
@@ -352,9 +335,9 @@ public class Account {
 
                         for (String command : event.getCommands()) {
 
-                            this.player.world.getMinecraftServer().getCommandManager().executeCommand(
-                                    this.player.world.getMinecraftServer(),
-                                    command.replace("%player%", this.player.getName())
+                            this.player.world.getServer().getCommandManager().handleCommand(
+                                    this.player.world.getServer().getCommandSource(),
+                                    command.replace("%player%", this.player.getName().getString())
                             );
 
                         }
@@ -375,9 +358,9 @@ public class Account {
 
                     for (String command : event.getCommands()) {
 
-                        this.player.world.getMinecraftServer().getCommandManager().executeCommand(
-                                this.player.world.getMinecraftServer(),
-                                command.replace("%player%", this.player.getName())
+                        this.player.world.getServer().getCommandManager().handleCommand(
+                                this.player.world.getServer().getCommandSource(),
+                                command.replace("%player%", this.player.getName().getString())
                         );
 
                     }
@@ -478,7 +461,7 @@ public class Account {
             }
             if (!passesRequirements) continue;
             double chance = sr.getLevelUpChance();
-            if (RandomHandler.getRandomChance(chance) || guaranteed) {
+            if (RandomHelper.getRandomChance(chance) || guaranteed) {
 
                 reward = sr;
                 if (multiple) {
@@ -514,9 +497,9 @@ public class Account {
 
                         for (String command : event.getCommands()) {
 
-                            this.player.world.getMinecraftServer().getCommandManager().executeCommand(
-                                    this.player.world.getMinecraftServer(),
-                                    command.replace("%player%", this.player.getName())
+                            this.player.world.getServer().getCommandManager().handleCommand(
+                                    this.player.world.getServer().getCommandSource(),
+                                    command.replace("%player%", this.player.getName().getString())
                             );
 
                         }
@@ -537,9 +520,9 @@ public class Account {
 
                     for (String command : event.getCommands()) {
 
-                        this.player.world.getMinecraftServer().getCommandManager().executeCommand(
-                                this.player.world.getMinecraftServer(),
-                                command.replace("%player%", this.player.getName())
+                        this.player.world.getServer().getCommandManager().handleCommand(
+                                this.player.world.getServer().getCommandSource(),
+                                command.replace("%player%", this.player.getName().getString())
                         );
 
                     }

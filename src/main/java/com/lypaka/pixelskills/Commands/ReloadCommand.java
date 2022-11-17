@@ -8,71 +8,70 @@ import com.lypaka.pixelskills.Config.ConfigGetters;
 import com.lypaka.pixelskills.Config.SkillGetters;
 import com.lypaka.pixelskills.PixelSkills;
 import com.lypaka.pixelskills.SkillRegistry.Skill;
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.server.MinecraftServer;
+import com.mojang.brigadier.CommandDispatcher;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.Commands;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 
-public class ReloadCommand extends CommandBase {
+public class ReloadCommand {
 
-    @Override
-    public String getName() {
+    public ReloadCommand (CommandDispatcher<CommandSource> dispatcher) {
 
-        return "reload";
+        for (String a : PixelSkillsCommand.ALIASES) {
 
-    }
+            dispatcher.register(
+                    Commands.literal(a)
+                            .then(Commands.literal("reload")
+                                    .executes(c -> {
 
-    @Override
-    public String getUsage (ICommandSender sender) {
+                                        if (c.getSource().getEntity() instanceof ServerPlayerEntity) {
 
-        return "/pixelskills reload";
+                                            ServerPlayerEntity player = (ServerPlayerEntity) c.getSource().getEntity();
+                                            if (!PermissionHandler.hasPermission(player, "pixelskills.command.admin")) {
 
-    }
+                                                player.sendMessage(FancyText.getFormattedText("&cYou don't have permission to use this command!"), player.getUniqueID());
+                                                return 0;
 
-    @Override
-    public void execute (MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+                                            }
 
-        if (sender instanceof EntityPlayerMP) {
+                                        }
 
-            EntityPlayerMP player = (EntityPlayerMP) sender;
-            if (!PermissionHandler.hasPermission(player, "pixelskills.command.admin")) {
+                                        try {
 
-                player.sendMessage(FancyText.getFormattedText("&cYou don't have permission to use this command!"));
-                return;
+                                            PixelSkills.configManager.load();
+                                            ConfigGetters.load();
+                                            PixelSkills.skillConfigManager = new HashMap<>();
+                                            for (String skillString : ConfigGetters.enabledSkills) {
 
-            }
+                                                String lowerSkill = skillString.toLowerCase();
+                                                String[] skillFiles = new String[]{lowerSkill + "Settings.conf", lowerSkill + "LevelUps.conf", lowerSkill + "Rewards.conf"};
+                                                Path skillDir = ConfigUtils.checkDir(PixelSkills.dir.resolve(skillString));
+                                                BasicConfigManager bcm = new BasicConfigManager(skillFiles, skillDir, PixelSkills.class, PixelSkills.MOD_NAME, PixelSkills.MOD_ID, PixelSkills.logger);
+                                                bcm.init();
+                                                Skill skill = new Skill(skillString, PixelSkills.configManager.getConfigNode(0, "Skills", skillString, "Access-Permission").getString(), bcm);
+                                                PixelSkills.skillConfigManager.put(skillString, skill);
 
-        }
+                                            }
 
-        try {
+                                            SkillGetters.load();
+                                            c.getSource().sendFeedback(FancyText.getFormattedText("&aSuccessfully reloaded PixelSkills configuration!"), true);
 
-            PixelSkills.configManager.load();
-            ConfigGetters.load();
-            PixelSkills.skillConfigManager = new HashMap<>();
-            for (String skillString : ConfigGetters.enabledSkills) {
+                                        } catch (ObjectMappingException | IOException e) {
 
-                String lowerSkill = skillString.toLowerCase();
-                String[] skillFiles = new String[]{lowerSkill + "Settings.conf", lowerSkill + "LevelUps.conf", lowerSkill + "Rewards.conf"};
-                Path skillDir = ConfigUtils.checkDir(PixelSkills.dir.resolve(skillString));
-                BasicConfigManager bcm = new BasicConfigManager(skillFiles, skillDir, PixelSkills.class, PixelSkills.MOD_NAME, PixelSkills.MOD_ID, PixelSkills.logger);
-                bcm.init();
-                Skill skill = new Skill(skillString, PixelSkills.configManager.getConfigNode(0, "Skills", skillString, "Access-Permission").getString(), bcm);
-                PixelSkills.skillConfigManager.put(skillString, skill);
+                                            e.printStackTrace();
 
-            }
+                                        }
 
-            SkillGetters.load();
-            sender.sendMessage(FancyText.getFormattedText("&aSuccessfully reloaded PixelSkills configuration!"));
+                                        return 1;
 
-        } catch (ObjectMappingException | IOException e) {
-
-            e.printStackTrace();
+                                    })
+                            )
+            );
 
         }
 
