@@ -25,7 +25,7 @@ public class PixelSkills {
 
     public static final String MOD_ID = "pixelskills";
     public static final String MOD_NAME = "PixelSkills";
-    public static final String VERSION = "5.1.0";
+    public static final String VERSION = "5.1.2";
     public static final Logger logger = LogManager.getLogger();
     public static BasicConfigManager configManager;
     public static PlayerConfigManager playerConfigManager;

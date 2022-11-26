@@ -18,7 +18,7 @@ public class CaptureListener {
     @SubscribeEvent
     public void onCapture (CaptureEvent.SuccessfulCapture event) {
 
-        ServerPlayerEntity player = event.player;
+        ServerPlayerEntity player = event.getPlayer();
         PixelmonEntity pokemon = event.getPokemon();
 
         if (!ConfigGetters.isSkillEnabled("Collector")) return;
